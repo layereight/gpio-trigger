@@ -1,0 +1,13 @@
+[Unit]
+Description=Trigger Raspberry Pi shutdown with GPIO push button
+After=network.target
+
+[Service]
+User=root
+Group=root
+Restart=always
+ExecStart={{ gpio_trigger_command }}
+
+[Install]
+WantedBy=multi-user.target
+

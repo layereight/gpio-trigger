@@ -1,0 +1,34 @@
+---
+#
+# typical run:
+#
+# ansible-playbook -i env/<ENVIRONMENT> gpio-trigger.yml
+#
+#
+
+- name: Install gpio-trigger as systemd service
+  hosts: volumio
+  gather_facts: false
+
+  vars:
+    systemd_service_template: "gpio-trigger.service.j2"
+    gpio_trigger_executable: "/etc/systemd/system/gpio-trigger.py"
+
+  roles:
+    - name: systemd
+      systemd_service: "volup"
+      gpio_trigger_command: "{{ gpio_trigger_executable }} 13 http://localhost:3000/api/v1/commands/?cmd=volume&volume=plus"
+
+    - name: systemd
+      systemd_service: "voldown"
+      gpio_trigger_command: "{{ gpio_trigger_executable }} 5 http://localhost:3000/api/v1/commands/?cmd=volume&volume=minus"
+
+
+  pre_tasks:
+
+    - name: "Copy gpio-trigger executable"
+      copy:
+        src: "../gpio-trigger.py"
+        dest: "{{ gpio_trigger_executable }}"
+        mode: 0700
+      become: yes
