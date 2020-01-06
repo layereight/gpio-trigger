@@ -6,8 +6,44 @@
 #
 #
 
+- name: Install prerequisite software
+  hosts: my_pi
+  gather_facts: false
+  tags: [ prerequisite_software ]
+
+  vars:
+
+    debian_packages:
+      - python3
+      - python3-pip
+      - vim
+
+    python_packages:
+      - RPi.GPIO
+      - spidev
+
+  tasks:
+
+    - name: "Run apt-get update if cache is older than a week"
+      become: yes
+      apt:
+        update_cache: yes
+        cache_valid_time: 604800 # 1 week = 7 * 24 * 3600 seconds
+
+    - name: "Install prerequisite debian packages"
+      become: yes
+      apt:
+        name: "{{ debian_packages }}"
+
+    - name: "Install prerequisite pip packages"
+      become: yes
+      pip:
+        name: "{{ python_packages }}"
+        executable: pip3
+
+
 - name: Install gpio-trigger as systemd service
-  hosts: volumio
+  hosts: my_pi
   gather_facts: false
 
   vars:
@@ -24,7 +60,7 @@
       gpio_trigger_command: "{{ gpio_trigger_executable }} 5 http://localhost:3000/api/v1/commands/?cmd=volume&volume=minus"
 
 
-  pre_tasks:
+  tasks:
 
     - name: "Copy gpio-trigger executable"
       copy:
@@ -32,3 +68,15 @@
         dest: "{{ gpio_trigger_executable }}"
         mode: 0700
       become: yes
+      notify: Restart systemd services
+
+  handlers:
+
+    - name: Restart systemd services
+      systemd:
+        name: "{{ item }}.service"
+        state: restarted
+      become: yes
+      loop:
+        - volup
+        - voldown

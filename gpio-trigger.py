@@ -1,9 +1,9 @@
-#!/usr/bin/python
-
+#!/usr/bin/env python3
+# -*- coding: utf8 -*-
 
 import sys
 import RPi.GPIO as GPIO
-import urllib2
+import urllib.request
 
 
 #print (sys.argv[1] + " " + sys.argv[2])
@@ -20,4 +20,4 @@ GPIO.setup(gpio, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 #
 while True:
     GPIO.wait_for_edge(gpio, GPIO.FALLING, bouncetime=200)
-    urllib2.urlopen(url)
+    urllib.request.urlopen(url)
