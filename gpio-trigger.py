@@ -4,12 +4,14 @@
 import sys
 import RPi.GPIO as GPIO
 import urllib.request
+import subprocess
 
 
 #print (sys.argv[1] + " " + sys.argv[2])
 
-gpio=int(sys.argv[1])
-url=sys.argv[2]
+gpio = int(sys.argv[1])
+action_type = sys.argv[2]
+action = sys.argv[3]
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(gpio, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -20,4 +22,8 @@ GPIO.setup(gpio, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 #
 while True:
     GPIO.wait_for_edge(gpio, GPIO.FALLING, bouncetime=200)
-    urllib.request.urlopen(url)
+
+    if action_type == "curl":
+        urllib.request.urlopen(action)
+    elif action_type == "command":
+        subprocess.call(action, shell=True, stdout=subprocess.DEVNULL)
