@@ -5,25 +5,49 @@ import sys
 import RPi.GPIO as GPIO
 import urllib.request
 import subprocess
+import threading
+import queue
 
 
-#print (sys.argv[1] + " " + sys.argv[2])
+def execute_curl(url: str):
+    urllib.request.urlopen(url)
 
-gpio = int(sys.argv[1])
-action_type = sys.argv[2]
-action = sys.argv[3]
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(gpio, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+def execute_command(command: str):
+    subprocess.call(command, shell=True, stdout=subprocess.DEVNULL)
 
-#
-# bouncetime
-# https://sourceforge.net/p/raspberry-gpio-python/wiki/Inputs/
-#
-while True:
-    GPIO.wait_for_edge(gpio, GPIO.FALLING, bouncetime=200)
 
-    if action_type == "curl":
-        urllib.request.urlopen(action)
-    elif action_type == "command":
-        subprocess.call(action, shell=True, stdout=subprocess.DEVNULL)
+def execute_action(trigger_queue: queue.Queue, action_function: callable, action_param: str):
+    while True:
+        trigger_queue.get()
+        action_function(action_param)
+
+
+ACTION_FUNCTIONS = {
+    "curl": execute_curl,
+    "command": execute_command
+}
+
+
+if __name__ == '__main__':
+    gpio = int(sys.argv[1])
+    action_type = sys.argv[2]
+    action = sys.argv[3]
+
+    if action_type not in ACTION_FUNCTIONS:
+        print("No such action type", action_type, file=sys.stderr)
+        exit(1)
+
+    event_queue = queue.Queue()
+    threading.Thread(target=execute_action, args=(event_queue, ACTION_FUNCTIONS[action_type], action), daemon=True).start()
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(gpio, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    #
+    # bouncetime
+    # https://sourceforge.net/p/raspberry-gpio-python/wiki/Inputs/
+    #
+    while True:
+        GPIO.wait_for_edge(gpio, GPIO.FALLING, bouncetime=200)
+        event_queue.put(1, False)
+
