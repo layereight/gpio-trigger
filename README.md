@@ -15,4 +15,5 @@ gpio-trigger.py <gpio_pin_number> <action_type> <action>
 ```
 gpio-trigger.py 13 curl 'http://localhost:3000/api/v1/commands/?cmd=volume&volume=plus'
 gpio-trigger.py 5 command '/usr/bin/amixer -c sndrpihifiberry sset SoftMaster 2%-'
+gpio-trigger.py 4 command 'shutdown -h now'
 ```
