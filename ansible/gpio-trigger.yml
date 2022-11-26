@@ -63,7 +63,7 @@
       gpio_trigger_command: "{{ gpio_trigger_executable }} 4 command 'shutdown -h now'"
 
 
-  pre_tasks:
+  post_tasks:
 
     - name: "Copy gpio-trigger executable"
       copy:
