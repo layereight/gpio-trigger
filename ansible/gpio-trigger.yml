@@ -19,7 +19,7 @@
       - vim
 
     python_packages:
-      - RPi.GPIO
+      - rpi-lgpio
 
   tasks:
 
@@ -39,6 +39,7 @@
       pip:
         name: "{{ python_packages }}"
         executable: pip3
+        break_system_packages: yes
 
 
 - name: Install gpio-trigger as systemd service
@@ -48,6 +49,16 @@
   vars:
     systemd_service_template: "gpio-trigger.service.j2"
     gpio_trigger_executable: "/etc/systemd/system/gpio-trigger.py"
+
+  pre_tasks:
+
+    - name: "Copy gpio-trigger executable"
+      copy:
+        src: "../gpio-trigger.py"
+        dest: "{{ gpio_trigger_executable }}"
+        mode: 0700
+      become: yes
+      notify: Restart systemd services
 
   roles:
     - name: systemd
@@ -61,17 +72,6 @@
     - name: systemd
       systemd_service: "pi-shutdown"
       gpio_trigger_command: "{{ gpio_trigger_executable }} 4 command 'shutdown -h now'"
-
-
-  post_tasks:
-
-    - name: "Copy gpio-trigger executable"
-      copy:
-        src: "../gpio-trigger.py"
-        dest: "{{ gpio_trigger_executable }}"
-        mode: 0700
-      become: yes
-      notify: Restart systemd services
 
   handlers:
 
